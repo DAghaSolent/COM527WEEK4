@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -29,18 +30,27 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.zIndex
 import kotlin.reflect.KProperty
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             Week4Theme {
+                val navController = rememberNavController()
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
+
                 ) {
-                    MapComposable(geoPoint = GeoPoint(51.05, -0.72))
+                    NavHost(navController = navController, startDestination = "MapComposable"){
+                        composable("MapComposable"){
+                            MapComposable(geoPoint = GeoPoint(51.05, -0.72))
+                        }
+                    }
                 }
             }
         }
@@ -53,6 +63,7 @@ fun MapComposable(geoPoint: GeoPoint) {
     var recentLong by remember {mutableStateOf("")}
     var recentLat by remember { mutableStateOf("") }
     var currentLoc by remember {mutableStateOf(GeoPoint(51.05, -0.72))}
+    var openTopoMap by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Row(modifier = Modifier
@@ -65,6 +76,7 @@ fun MapComposable(geoPoint: GeoPoint) {
                 modifier = Modifier.weight(1.0f)) {
                 Text("Go!")
             }
+            Switch(checked = openTopoMap, onCheckedChange = { openTopoMap = it})
         }
 
         AndroidView(
@@ -76,17 +88,15 @@ fun MapComposable(geoPoint: GeoPoint) {
                 MapView(ctx).apply {
                     setClickable(true)
                     setMultiTouchControls(true)
-                    setTileSource(TileSourceFactory.MAPNIK)
+                    setTileSource(if(openTopoMap)TileSourceFactory.OpenTopo else TileSourceFactory.MAPNIK)
                     controller.setZoom(14.0)
-
                 }
             },
 
             update = { view ->
                 view.controller.setCenter(currentLoc)
+                view.setTileSource(if(openTopoMap) TileSourceFactory.OpenTopo else TileSourceFactory.MAPNIK)
             }
         )
     }
 }
-
-
