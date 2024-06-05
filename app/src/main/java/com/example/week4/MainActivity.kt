@@ -44,6 +44,7 @@ class MainActivity : ComponentActivity() {
             Week4Theme {
                 val navController = rememberNavController()
                 val viewModel : MapViewModel by viewModels()
+                var openTopoMap by remember { mutableStateOf(false) }
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -53,10 +54,14 @@ class MainActivity : ComponentActivity() {
                     NavHost(navController = navController, startDestination = "MapComposable"){
                         composable("MapComposable"){
                             MapComposable(settingsScreenCallBack = {navController.navigate("SettingsScreen")},
-                                viewModel, geoPoint = GeoPoint(51.05, -0.72))
+                                viewModel, geoPoint = GeoPoint(51.05, -0.72), openTopoMap = openTopoMap )
                         }
                         composable("SettingsScreen"){
-                            SettingsScreen(viewModel, navController)
+                            SettingsScreen(openTopoMapCallBack =  {recentLat, recentLong, openTopo ->
+                                viewModel.currentLoc = GeoPoint(recentLat, recentLong)
+                                openTopoMap = openTopo
+                                navController.navigate("MapComposable")
+                            })
                         }
                     }
                 }
@@ -66,7 +71,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MapComposable(settingsScreenCallBack: () -> Unit, viewModel: MapViewModel, geoPoint: GeoPoint) {
+fun MapComposable(settingsScreenCallBack: () -> Unit, viewModel: MapViewModel, geoPoint: GeoPoint, openTopoMap: Boolean) {
 
     Column(modifier = Modifier.fillMaxSize()) {
 
@@ -87,55 +92,48 @@ fun MapComposable(settingsScreenCallBack: () -> Unit, viewModel: MapViewModel, g
                 MapView(ctx).apply {
                     setClickable(true)
                     setMultiTouchControls(true)
-                    setTileSource(if(viewModel.openTopoMap)TileSourceFactory.OpenTopo else TileSourceFactory.MAPNIK)
+                    setTileSource(if(openTopoMap)TileSourceFactory.OpenTopo else TileSourceFactory.MAPNIK)
                     controller.setZoom(14.0)
                 }
             },
 
             update = { view ->
                 view.controller.setCenter(viewModel.currentLoc)
-                view.setTileSource(if(viewModel.openTopoMap) TileSourceFactory.OpenTopo else TileSourceFactory.MAPNIK)
+                view.setTileSource(if(openTopoMap) TileSourceFactory.OpenTopo else TileSourceFactory.MAPNIK)
             }
         )
     }
 }
 
 @Composable
-fun SettingsScreen(viewModel: MapViewModel, navController: NavController){
+fun SettingsScreen(openTopoMapCallBack: (Double, Double, Boolean) -> Unit){
+
+    var recentLong by remember {mutableStateOf("")}
+    var recentLat by remember { mutableStateOf("") }
+    var openTopoMap by remember { mutableStateOf(false) }
+
     Column {
         Row(modifier = Modifier
             .fillMaxWidth()
             .zIndex(2.0f)) {
             TextField(
-                value = viewModel.recentLong,
-                onValueChange = { newLon -> viewModel.recentLong = newLon },
+                value = recentLong,
+                onValueChange = { newLon -> recentLong = newLon },
                 modifier = Modifier.weight(1.0f),
                 label = { Text("Longitude") })
             TextField(
-                value = viewModel.recentLat,
-                onValueChange = { viewModel.recentLat = it },
+                value = recentLat,
+                onValueChange = { recentLat = it },
                 modifier = Modifier.weight(1.0f),
                 label = { Text("Latitude") })
 
-            Button(
-                onClick = {
-                    viewModel.currentLoc = GeoPoint(
-                        viewModel.recentLat.toDoubleOrNull() ?: 51.05,
-                        viewModel.recentLong.toDoubleOrNull() ?: -0.72
-                    )
-                },
-                modifier = Modifier.weight(1.0f)
-            ) {
-                Text("Go!")
-            }
-            Switch(checked = viewModel.openTopoMap, onCheckedChange = { viewModel.openTopoMap = it })
+            Switch(checked = openTopoMap, onCheckedChange = { openTopoMap = it })
         }
 
         Row {
-            Button(onClick = { navController.popBackStack() }) {
+            Button(onClick = { openTopoMapCallBack(recentLat.toDouble(), recentLong.toDouble(), openTopoMap)}) {
                 Text("Back to Map")
             }
         }
     }
-
 }
