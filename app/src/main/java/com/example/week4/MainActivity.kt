@@ -36,6 +36,35 @@ import kotlin.reflect.KProperty
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.DrawerState
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
+import kotlinx.coroutines.launch
+
+@OptIn(ExperimentalMaterial3Api::class)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,25 +75,44 @@ class MainActivity : ComponentActivity() {
                 val viewModel : MapViewModel by viewModels()
                 var openTopoMap by remember { mutableStateOf(false) }
                 // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-
-                ) {
-                    NavHost(navController = navController, startDestination = "MapComposable"){
-                        composable("MapComposable"){
-                            MapComposable(settingsScreenCallBack = {navController.navigate("SettingsScreen")},
-                                viewModel, geoPoint = GeoPoint(51.05, -0.72), openTopoMap = openTopoMap )
+                Scaffold(
+                    bottomBar = {
+                        NavigationBar {
+                            NavigationBarItem(
+                                selected = true,
+                                onClick = { navController.navigate("MapComposable") },
+                                icon = { Icon(Icons.Filled.Home, "Mapping Home Screen")},
+                                label = { Text("Mapping Home Page")}
+                            )
+                            NavigationBarItem(
+                                selected = false,
+                                onClick = { navController.navigate("SettingsScreen") },
+                                icon = { Icon(Icons.Filled.Settings, "Settings Screen")},
+                                label = { Text("Setting Screen Page")}
+                            )
                         }
-                        composable("SettingsScreen"){
-                            SettingsScreen(openTopoMapCallBack =  {recentLat, recentLong, openTopo ->
-                                viewModel.currentLoc = GeoPoint(recentLat, recentLong)
-                                openTopoMap = openTopo
-                                navController.navigate("MapComposable")
-                            })
+                    }
+                ){
+                    Surface(
+                        modifier = Modifier.fillMaxSize().padding(it),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        NavHost(navController = navController, startDestination = "MapComposable"){
+                            composable("MapComposable"){
+                                MapComposable(settingsScreenCallBack = {navController.navigate("SettingsScreen")},
+                                    viewModel, geoPoint = GeoPoint(51.05, -0.72), openTopoMap = openTopoMap )
+                            }
+                            composable("SettingsScreen"){
+                                SettingsScreen(openTopoMapCallBack =  {recentLat, recentLong, openTopo ->
+                                    viewModel.currentLoc = GeoPoint(recentLat, recentLong)
+                                    openTopoMap = openTopo
+                                    navController.navigate("MapComposable")
+                                })
+                            }
                         }
                     }
                 }
+
             }
         }
     }
