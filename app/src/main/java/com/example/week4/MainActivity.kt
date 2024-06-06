@@ -37,6 +37,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -62,6 +63,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -74,6 +76,8 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val viewModel : MapViewModel by viewModels()
                 var openTopoMap by remember { mutableStateOf(false) }
+                val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+                val coroutineScope = rememberCoroutineScope()
                 // A surface container using the 'background' color from the theme
                 Scaffold(
                     bottomBar = {
@@ -97,7 +101,14 @@ class MainActivity : ComponentActivity() {
                             containerColor = MaterialTheme.colorScheme.primaryContainer,
                             titleContentColor = MaterialTheme.colorScheme.primary
                         ), actions = {
-                            IconButton(onClick = {}){
+                            IconButton(onClick = {
+                                coroutineScope.launch{if(drawerState.isClosed){
+                                    drawerState.open()
+                                } else {
+                                    drawerState.close()
+                                }
+                                }
+                            }){
                                 Icon(imageVector = Icons.Filled.Menu, "Menu")
                             }
                         }, title = {Text("Top Bar Example")})
@@ -109,17 +120,44 @@ class MainActivity : ComponentActivity() {
                             .padding(it),
                         color = MaterialTheme.colorScheme.background
                     ) {
-                        NavHost(navController = navController, startDestination = "MapComposable"){
-                            composable("MapComposable"){
-                                MapComposable(settingsScreenCallBack = {navController.navigate("SettingsScreen")},
-                                    viewModel, geoPoint = GeoPoint(51.05, -0.72), openTopoMap = openTopoMap )
+                        ModalNavigationDrawer(drawerState = drawerState,
+                            drawerContent = {
+
+                                ModalDrawerSheet(modifier = Modifier.height(200.dp)){
+
+                                    NavigationDrawerItem(
+                                        selected = false,
+                                        label = {Text("Map")},
+                                        onClick = {
+                                            coroutineScope.launch { drawerState.close() }
+                                            navController.navigate("MapComposable")
+                                        }
+                                    )
+
+                                    NavigationDrawerItem(
+                                        selected = false,
+                                        label = {Text("Settings")},
+                                        onClick = {
+                                            coroutineScope.launch {drawerState.close()}
+                                            navController.navigate("SettingsScreen")
+                                        }
+                                    )
+                                }
                             }
-                            composable("SettingsScreen"){
-                                SettingsScreen(openTopoMapCallBack =  {recentLat, recentLong, openTopo ->
-                                    viewModel.currentLoc = GeoPoint(recentLat, recentLong)
-                                    openTopoMap = openTopo
-                                    navController.navigate("MapComposable")
-                                })
+                        )
+                        {
+                            NavHost(navController = navController, startDestination = "MapComposable"){
+                                composable("MapComposable"){
+                                    MapComposable(settingsScreenCallBack = {navController.navigate("SettingsScreen")},
+                                        viewModel, geoPoint = GeoPoint(51.05, -0.72), openTopoMap = openTopoMap )
+                                }
+                                composable("SettingsScreen"){
+                                    SettingsScreen(openTopoMapCallBack =  {recentLat, recentLong, openTopo ->
+                                        viewModel.currentLoc = GeoPoint(recentLat, recentLong)
+                                        openTopoMap = openTopo
+                                        navController.navigate("MapComposable")
+                                    })
+                                }
                             }
                         }
                     }
