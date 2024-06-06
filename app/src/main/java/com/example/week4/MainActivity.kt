@@ -91,10 +91,22 @@ class MainActivity : ComponentActivity() {
                                 label = { Text("Setting Screen Page")}
                             )
                         }
+                    },
+                    topBar = {
+                        TopAppBar(colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            titleContentColor = MaterialTheme.colorScheme.primary
+                        ), actions = {
+                            IconButton(onClick = {}){
+                                Icon(imageVector = Icons.Filled.Menu, "Menu")
+                            }
+                        }, title = {Text("Top Bar Example")})
                     }
                 ){
                     Surface(
-                        modifier = Modifier.fillMaxSize().padding(it),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(it),
                         color = MaterialTheme.colorScheme.background
                     ) {
                         NavHost(navController = navController, startDestination = "MapComposable"){
