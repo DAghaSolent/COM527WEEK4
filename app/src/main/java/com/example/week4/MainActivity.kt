@@ -181,6 +181,7 @@ fun MapComposable(settingsScreenCallBack: () -> Unit, viewModel: MapViewModel, g
             .fillMaxWidth()
             .zIndex(2.0f)) {
             Button(onClick = { settingsScreenCallBack() }) {
+                Icon(Icons.Filled.Settings, "Settings Page")
                 Text("Settings")
             }
         }
