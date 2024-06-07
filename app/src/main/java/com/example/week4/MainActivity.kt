@@ -85,7 +85,11 @@ class MainActivity : ComponentActivity() {
                             NavigationBarItem(
                                 selected = true,
                                 onClick = { navController.navigate("MapComposable") },
-                                icon = { Icon(Icons.Filled.Home, "Mapping Home Screen")},
+                                icon = { Icon(
+                                    painter = painterResource(R.drawable.map_asset),
+                                    contentDescription = "Map",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )},
                                 label = { Text("Mapping Home Page")}
                             )
                             NavigationBarItem(
